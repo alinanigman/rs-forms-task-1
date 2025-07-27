@@ -10,3 +10,12 @@
   flex-direction: column;
   gap: 10px;
 }
+
+.error {
+  height: 56px;
+}
+
+.errorText {
+  color: red;
+  font-size: 14px;
+}
