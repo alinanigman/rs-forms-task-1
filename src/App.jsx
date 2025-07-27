@@ -1,111 +1,75 @@
-import { useState, useRef } from "react";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { useRef } from "react";
 import styles from "./App.module.css";
 
-function App() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [repeatPassword, setRepeatPassword] = useState("");
-  const [error, setError] = useState(null);
+const schema = yup.object({
+  email: yup
+    .string()
+    .email("Невалидный email")
+    .required("Email обязателен")
+    .matches(/^[\w_-]+@[\w_-]+\.[a-zA-Z]{2,}$/, "Email не корректен"),
+  password: yup
+    .string()
+    .min(8, "Пароль должен быть минимум 8 символов")
+    .required("Пароль обязателен"),
+  repeatPassword: yup
+    .string()
+    .oneOf([yup.ref("password")], "Пароли не совпадают")
+    .required("Повтор пароля обязателен"),
+});
 
+function App() {
   const submitButtonRef = useRef(null);
 
-  const maybeFocusSubmitButton = (
-    nextEmail,
-    nextPassword,
-    nextRepeatPassword,
-  ) => {
-    const isValid =
-      validateEmail(nextEmail) &&
-      validatePassword(nextPassword) &&
-      validateRepeatPassword(nextRepeatPassword);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid },
+  } = useForm({
+    resolver: yupResolver(schema),
+    mode: "onChange",
+  });
 
-    if (isValid && submitButtonRef.current) {
-      submitButtonRef.current.focus();
-    }
+  const onSubmit = (data) => {
+    console.log("Форма отправлена", data);
   };
 
-  const validateEmail = (emailValue) => {
-    const emailRegex = /^[\w_-]+@[\w_-]+\.[a-zA-Z]{2,}$/;
-    return emailRegex.test(emailValue);
-  };
-
-  const validatePassword = (passwordValue) => {
-    return passwordValue.length >= 8;
-  };
-
-  const validateRepeatPassword = (repeatPasswordValue) => {
-    return repeatPasswordValue === password;
-  };
-
-  const onEmailChange = ({ target }) => {
-    const value = target.value;
-    setEmail(value);
-    let errorText = null;
-    if (!validateEmail(value)) {
-      errorText = "Email не корректен";
-    }
-    setError(errorText);
-    maybeFocusSubmitButton(value, password, repeatPassword);
-  };
-
-  const onPasswordChange = ({ target }) => {
-    const value = target.value;
-    setPassword(value);
-    let errorText = null;
-    if (!validatePassword(value)) {
-      errorText = "Пароль должен быть не короче 8 символов";
-    }
-    setError(errorText);
-    maybeFocusSubmitButton(email, value, repeatPassword);
-  };
-
-  const onRepeatPasswordChange = ({ target }) => {
-    const value = target.value;
-    setRepeatPassword(value);
-    let error = null;
-    if (!validateRepeatPassword(value)) {
-      error = "Пароли не совпадают";
-    }
-    setError(error);
-    maybeFocusSubmitButton(email, password, value);
-  };
-
-  const onSubmit = (event) => {
-    event.preventDefault();
-    console.log("Форма отправлена", { email, password, repeatPassword });
-  };
+  if (isValid && submitButtonRef.current) {
+    submitButtonRef.current.focus();
+  }
 
   return (
     <div className={styles.App}>
-      <form className={styles.form} onSubmit={onSubmit}>
+      <form className={styles.form} onSubmit={handleSubmit(onSubmit)}>
         <div className={styles.error}>
-          {!!error && <p className={styles.errorText}>{error}</p>}
+          {Object.keys(errors).length > 0 &&
+            Object.entries(errors).map(([field, error]) => (
+              <p key={field} className={styles.errorText}>
+                {error.message}
+              </p>
+            ))}
         </div>
         <input
           type="text"
-          name="email"
-          value={email}
           placeholder="Логин"
           autoComplete="email"
-          onChange={onEmailChange}
+          {...register("email")}
         />
         <input
           type="password"
-          name="password"
-          value={password}
           placeholder="Пароль"
           autoComplete="new-password"
-          onChange={onPasswordChange}
+          {...register("password")}
         />
         <input
           type="password"
-          name="repeatPassword"
-          value={repeatPassword}
           placeholder="Повторите пароль"
           autoComplete="new-password"
-          onChange={onRepeatPasswordChange}
+          {...register("repeatPassword")}
         />
-        <button ref={submitButtonRef} type="submit" disabled={!!error}>
+        <button ref={submitButtonRef} type="submit" disabled={!!errors.length}>
           Зарегистрироваться
         </button>
       </form>
