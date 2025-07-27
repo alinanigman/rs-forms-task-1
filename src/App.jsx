@@ -1,16 +1,32 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import styles from "./App.module.css";
 
 function App() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [repeatPassword, setRepeatPassword] = useState("");
   const [error, setError] = useState(null);
 
-  const onEmailChange = ({ target }) => {
-    setEmail(target.value);
-    let errorText = null;
+  const submitButtonRef = useRef(null);
+
+  const validateEmail = (emailValue) => {
     const emailRegex = /^[\w_-]+@[\w_-]+\.[a-zA-Z]{2,}$/;
-    if (!emailRegex.test(target.value)) {
+    return emailRegex.test(emailValue);
+  };
+
+  const validatePassword = (passwordValue) => {
+    return passwordValue.length >= 8;
+  };
+
+  const validateRepeatPassword = (repeatPasswordValue) => {
+    return repeatPasswordValue === password;
+  };
+
+  const onEmailChange = ({ target }) => {
+    const value = target.value;
+    setEmail(value);
+    let errorText = null;
+    if (!validateEmail(value)) {
       errorText = "Email не корректен";
     }
     setError(errorText);
@@ -20,15 +36,30 @@ function App() {
     const value = target.value;
     setPassword(value);
     let errorText = null;
-    if (value.length < 8) {
+    if (!validatePassword(value)) {
       errorText = "Пароль должен быть не короче 8 символов";
     }
     setError(errorText);
   };
 
+  const onRepeatPasswordChange = ({ target }) => {
+    const value = target.value;
+    setRepeatPassword(value);
+    let error = null;
+    if (!validateRepeatPassword(value)) {
+      error = "Пароли не совпадают";
+    }
+    setError(error);
+  };
+
+  const onSubmit = (event) => {
+    event.preventDefault();
+    console.log("Форма отправлена", { email, password, repeatPassword });
+  };
+
   return (
     <div className={styles.App}>
-      <form className={styles.form}>
+      <form className={styles.form} onSubmit={onSubmit}>
         <div className={styles.error}>
           {!!error && <p className={styles.errorText}>{error}</p>}
         </div>
@@ -37,6 +68,7 @@ function App() {
           name="email"
           value={email}
           placeholder="Логин"
+          autoComplete="email"
           onChange={onEmailChange}
         />
         <input
@@ -44,9 +76,20 @@ function App() {
           name="password"
           value={password}
           placeholder="Пароль"
+          autoComplete="new-password"
           onChange={onPasswordChange}
         />
-        <button>Зарегистрироваться</button>
+        <input
+          type="password"
+          name="repeatPassword"
+          value={repeatPassword}
+          placeholder="Повторите пароль"
+          autoComplete="new-password"
+          onChange={onRepeatPasswordChange}
+        />
+        <button ref={submitButtonRef} type="submit" disabled={!!error}>
+          Зарегистрироваться
+        </button>
       </form>
     </div>
   );
