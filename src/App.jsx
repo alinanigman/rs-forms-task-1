@@ -9,6 +9,21 @@ function App() {
 
   const submitButtonRef = useRef(null);
 
+  const maybeFocusSubmitButton = (
+    nextEmail,
+    nextPassword,
+    nextRepeatPassword,
+  ) => {
+    const isValid =
+      validateEmail(nextEmail) &&
+      validatePassword(nextPassword) &&
+      validateRepeatPassword(nextRepeatPassword);
+
+    if (isValid && submitButtonRef.current) {
+      submitButtonRef.current.focus();
+    }
+  };
+
   const validateEmail = (emailValue) => {
     const emailRegex = /^[\w_-]+@[\w_-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(emailValue);
@@ -30,6 +45,7 @@ function App() {
       errorText = "Email не корректен";
     }
     setError(errorText);
+    maybeFocusSubmitButton(value, password, repeatPassword);
   };
 
   const onPasswordChange = ({ target }) => {
@@ -40,6 +56,7 @@ function App() {
       errorText = "Пароль должен быть не короче 8 символов";
     }
     setError(errorText);
+    maybeFocusSubmitButton(email, value, repeatPassword);
   };
 
   const onRepeatPasswordChange = ({ target }) => {
@@ -50,6 +67,7 @@ function App() {
       error = "Пароли не совпадают";
     }
     setError(error);
+    maybeFocusSubmitButton(email, password, value);
   };
 
   const onSubmit = (event) => {
